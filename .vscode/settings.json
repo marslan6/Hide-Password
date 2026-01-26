@@ -1,0 +1,19 @@
+{
+    "PROJECT.NAME": ".",
+    "files.associations": {
+        "xmc_gpio.h": "c",
+        "virtualserial.h": "c",
+        "usb.h": "c",
+        "xmc_common.h": "c",
+        "xmc_device.h": "c",
+        "morse_alphabet.h": "c",
+        "morse_encoder.h": "c",
+        "ENCODER.C": "cpp",
+        "MORSE_ENCODER.C": "cpp",
+        "xmc4500.h": "c",
+        "keyboardhid.h": "c",
+        "german_keyboardcodes.h": "c",
+        "descriptors.h": "c",
+        "string.h": "c"
+    }
+}

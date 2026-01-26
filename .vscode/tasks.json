@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "make (build)",
+      "type": "shell",
+      "command": "make",
+      "options": { "cwd": "${workspaceFolder}/${config:PROJECT.NAME}" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "make clean",
+      "type": "shell",
+      "command": "make clean",
+      "options": { "cwd": "${workspaceFolder}/${config:PROJECT.NAME}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "make debug (gdb-multiarch)",
+      "type": "shell",
+      "command": "make debug DB=gdb-multiarch",
+      "options": { "cwd": "${workspaceFolder}/${config:PROJECT.NAME}" },
+      "problemMatcher": []
+    }
+  ]
+}

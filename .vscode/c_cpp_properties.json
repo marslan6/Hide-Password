@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "ARM-GCC",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/XMClib/XMC_Peripheral_Library_v2.1.16/XMCLib/inc", // MODIFIED
+                "/opt/XMClib/XMC_Peripheral_Library_v2.1.16/CMSIS/Include", // MODIFIED
+                "/opt/XMClib/XMC_Peripheral_Library_v2.1.16/CMSIS/Infineon/XMC4500_series/Include", // MODIFIED
+                "/opt/XMClib/XMC_Peripheral_Library_v2.1.16/ThirdPartyLibraries/**" // MODIFIED
+            ],
+            "defines": ["XMC4500_F100x1024"], // MODIFIED
+            "compilerPath": "/usr/bin/arm-none-eabi-gcc",
+            "cStandard": "gnu99", // MODIFIED
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-arm" // MODIFIED
+        }
+    ],
+    "version": 4
+}
