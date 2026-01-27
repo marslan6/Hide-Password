@@ -17,10 +17,9 @@ extern uint8_t nameCharPosition;
 extern bool nameKeyReleased;
 extern const char nameString[];
 
-// External function declarations
-extern uint8_t GetCharCodeInGerman(char c, uint8_t *modifier);
-
+// Include function declarations
 #include "report_utils.h"
+#include "char_code_german.h"
 
 void HandleCharacterRelease(USB_KeyboardReport_Data_t *report)
 {

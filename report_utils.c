@@ -1,9 +1,7 @@
 #include "report_utils.h"
 #include "german_keyboardCodes.h"
-
-// External function declarations
-extern char IndexToChar(uint8_t index);
-extern uint8_t GetCharCodeInGerman(char c, uint8_t *modifier);
+#include "index_to_char.h"
+#include "char_code_german.h"
 
 void ClearReport(USB_KeyboardReport_Data_t *report)
 {
