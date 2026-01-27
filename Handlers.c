@@ -25,10 +25,11 @@ void HandleCharacterRelease(USB_KeyboardReport_Data_t* report)
 {
 	ClearReport(report);
 	awaitingKeyRelease = 0;
+
 	if (!shouldSendEnterKey)
 	{
-		readyForNextCharacter = false;
 		++testingCharacterIndex;
+		readyForNextCharacter = false;
 	}
 }
 
@@ -55,8 +56,7 @@ void HandlePasswordCharSend(USB_KeyboardReport_Data_t* report, bool* isReleased)
 		}
 		else
 		{
-			SendCharacter(discoveredPasswordBuffer[passwordOutputPosition], report);
-			passwordOutputPosition++;
+			SendCharacter(discoveredPasswordBuffer[passwordOutputPosition++], report);
 			*isReleased = false;
 		}
 	}
