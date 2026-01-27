@@ -1,29 +1,30 @@
 #include "KeyboardHID.h"
 #include "german_keyboardCodes.h"
+#include "handlers.h"
+#include "report_utils.h"
 
 #define LED1 P1_1
 #define LED2 P1_0
 #define TICKS_PER_SECOND 10000
 
-static volatile uint32_t system_ticks;
-static uint32_t characterResponseTimes[84];
-static char discoveredPasswordBuffer[20];
+volatile uint32_t system_ticks;
+uint32_t characterResponseTimes[84];
+char discoveredPasswordBuffer[20];
 
-static uint8_t nameCharPosition = 0;
-static uint8_t awaitingKeyRelease = 0;
-static uint8_t testingCharacterIndex = 0;
+uint8_t nameCharPosition = 0;
+uint8_t awaitingKeyRelease = 0;
+uint8_t testingCharacterIndex = 0;
 static uint8_t detectedCharacterIndex = 0;
-static uint8_t passwordOutputPosition = 0;
-static uint8_t extractedPasswordLength = 0;
-static bool nameKeyReleased = true;
+uint8_t passwordOutputPosition = 0;
+uint8_t extractedPasswordLength = 0;
+bool nameKeyReleased = true;
 
-static bool capsLockPhaseFinished = false;
-static bool shouldSendEnterKey = false;
-static bool readyForNextCharacter = false;
+bool capsLockPhaseFinished = false;
+bool shouldSendEnterKey = false;
+bool readyForNextCharacter = false;
 static bool passwordExtractionComplete = false;
 
-/// @brief change below
-static const char nameString[] = "echo \"mehmet arslan\" > $HOME/03811532";
+const char nameString[] = "echo \"mehmet arslan\" > $HOME/03811532";
 
 XMC_SCU_CLOCK_CONFIG_t clock_config = 
 {
@@ -50,8 +51,8 @@ void SysTick_Handler(void)
 
 bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t *const HIDInterfaceInfo, uint8_t *const ReportID, const uint8_t ReportType, void *ReportData, uint16_t *const ReportSize);
 void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t *const HIDInterfaceInfo, const uint8_t ReportID, const uint8_t ReportType, const void *ReportData, const uint16_t ReportSize);
-static uint8_t GetCharCodeInGerman(char c, uint8_t *modifier);
-static char IndexToChar(uint8_t index);
+uint8_t GetCharCodeInGerman(char c, uint8_t *modifier);
+char IndexToChar(uint8_t index);
 uint8_t findTheChar();
 
 int main(void)
@@ -73,7 +74,7 @@ int main(void)
 }
 
 // Convert index (0-84) to character
-static char IndexToChar(uint8_t index)
+char IndexToChar(uint8_t index)
 {
 	// 0-25: lowercase a-z
 	if (index < 26)
@@ -126,7 +127,7 @@ static char IndexToChar(uint8_t index)
 }
 
 // Convert ASCII character to German keyboard scancode
-static uint8_t GetCharCodeInGerman(char c, uint8_t *modifier)
+uint8_t GetCharCodeInGerman(char c, uint8_t *modifier)
 {
 	*modifier = 0;
 
@@ -237,139 +238,8 @@ static uint8_t GetCharCodeInGerman(char c, uint8_t *modifier)
 	return 0;
 }
 
-void ClearReport(USB_KeyboardReport_Data_t *report)
-{
-	report->Modifier = 0;
-	report->Reserved = 0;
-	report->KeyCode[0] = 0;
-}
 
-void SendEnterKey(USB_KeyboardReport_Data_t *report)
-{
-	report->Modifier = 0;
-	report->Reserved = 0;
-	report->KeyCode[0] = 0x28;
-}
 
-void SendCharacter(uint8_t charIndex, USB_KeyboardReport_Data_t *report)
-{
-	char c = IndexToChar(charIndex);
-	report->KeyCode[0] = GetCharCodeInGerman(c, &report->Modifier);
-}
-
-void HandleCharacterRelease(USB_KeyboardReport_Data_t *report)
-{
-	ClearReport(report);
-	awaitingKeyRelease = 0;
-	if (!shouldSendEnterKey)
-	{
-		readyForNextCharacter = false;
-		++testingCharacterIndex;
-	}
-}
-
-void HandleEnterKeyPress(USB_KeyboardReport_Data_t *report)
-{
-	SendEnterKey(report);
-	shouldSendEnterKey = false;
-	characterResponseTimes[testingCharacterIndex] = system_ticks;
-	system_ticks = 0;
-	awaitingKeyRelease = 1;
-}
-
-void HandlePasswordCharSend(USB_KeyboardReport_Data_t *report, bool *isReleased)
-{
-	if (*isReleased)
-	{
-		report->Modifier = 0;
-		if (passwordOutputPosition == extractedPasswordLength)
-		{
-			SendCharacter(testingCharacterIndex, report);
-			passwordOutputPosition = 0;
-			shouldSendEnterKey = true;
-			*isReleased = false;
-		}
-		else
-		{
-			SendCharacter(discoveredPasswordBuffer[passwordOutputPosition], report);
-			passwordOutputPosition++;
-			*isReleased = false;
-		}
-	}
-	else
-	{
-		ClearReport(report);
-		*isReleased = true;
-	}
-}
-
-void HandlePasswordInput(USB_KeyboardReport_Data_t *report, bool *isReleased)
-{
-	if (testingCharacterIndex < 84 && readyForNextCharacter)
-	{
-		if (awaitingKeyRelease)
-		{
-			HandleCharacterRelease(report);
-		}
-		else if (shouldSendEnterKey)
-		{
-			HandleEnterKeyPress(report);
-		}
-		else
-		{
-			HandlePasswordCharSend(report, isReleased);
-		}
-	}
-	else
-	{
-		ClearReport(report);
-		awaitingKeyRelease = 0;
-	}
-}
-
-void HandleCapsLockToggle(USB_KeyboardReport_Data_t *report, bool *capsLockPressed)
-{
-	if (*capsLockPressed)
-	{
-		ClearReport(report);
-		awaitingKeyRelease = 0;
-		capsLockPhaseFinished = true;
-	}
-	else
-	{
-		report->Modifier = 0;
-		report->Reserved = 0;
-		report->KeyCode[0] = HID_KEYBOARD_SC_CAPS_LOCK;
-		*capsLockPressed = true;
-		for (int i = 0; i < 10e5; ++i)
-			;
-	}
-}
-
-void HandleNameOutput(USB_KeyboardReport_Data_t *report)
-{
-	size_t nameLength = sizeof(nameString) - 1;
-
-	if (nameCharPosition < nameLength)
-	{
-		if (nameKeyReleased)
-		{
-			report->KeyCode[0] = GetCharCodeInGerman(nameString[nameCharPosition], &report->Modifier);
-			nameKeyReleased = false;
-		}
-		else
-		{
-			ClearReport(report);
-			nameKeyReleased = true;
-			nameCharPosition++;
-		}
-	}
-	else if (nameCharPosition == nameLength)
-	{
-		SendEnterKey(report);
-		nameCharPosition++;
-	}
-}
 
 bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t *const HIDInterfaceInfo, uint8_t *const ReportID, const uint8_t ReportType, void *ReportData, uint16_t *const ReportSize)
 {
