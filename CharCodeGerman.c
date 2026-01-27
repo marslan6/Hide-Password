@@ -3,7 +3,7 @@
 #include "KeyboardHID.h"
 
 // Convert ASCII character to German keyboard scancode
-uint8_t GetCharCodeInGerman(char c, uint8_t *modifier)
+uint8_t GetCharCodeInGerman(char c, uint8_t* modifier)
 {
 	*modifier = 0;
 

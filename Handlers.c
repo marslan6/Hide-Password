@@ -21,7 +21,7 @@ extern const char nameString[];
 #include "ReportUtils.h"
 #include "CharCodeGerman.h"
 
-void HandleCharacterRelease(USB_KeyboardReport_Data_t *report)
+void HandleCharacterRelease(USB_KeyboardReport_Data_t* report)
 {
 	ClearReport(report);
 	awaitingKeyRelease = 0;
@@ -32,7 +32,7 @@ void HandleCharacterRelease(USB_KeyboardReport_Data_t *report)
 	}
 }
 
-void HandleEnterKeyPress(USB_KeyboardReport_Data_t *report)
+void HandleEnterKeyPress(USB_KeyboardReport_Data_t* report)
 {
 	SendEnterKey(report);
 	shouldSendEnterKey = false;
@@ -41,7 +41,7 @@ void HandleEnterKeyPress(USB_KeyboardReport_Data_t *report)
 	awaitingKeyRelease = 1;
 }
 
-void HandlePasswordCharSend(USB_KeyboardReport_Data_t *report, bool *isReleased)
+void HandlePasswordCharSend(USB_KeyboardReport_Data_t* report, bool* isReleased)
 {
 	if (*isReleased)
 	{
@@ -67,7 +67,7 @@ void HandlePasswordCharSend(USB_KeyboardReport_Data_t *report, bool *isReleased)
 	}
 }
 
-void HandlePasswordInput(USB_KeyboardReport_Data_t *report, bool *isReleased)
+void HandlePasswordInput(USB_KeyboardReport_Data_t* report, bool* isReleased)
 {
 	if (testingCharacterIndex < 84 && readyForNextCharacter)
 	{
@@ -91,7 +91,7 @@ void HandlePasswordInput(USB_KeyboardReport_Data_t *report, bool *isReleased)
 	}
 }
 
-void HandleCapsLockToggle(USB_KeyboardReport_Data_t *report, bool *capsLockPressed)
+void HandleCapsLockToggle(USB_KeyboardReport_Data_t* report, bool* capsLockPressed)
 {
 	if (*capsLockPressed)
 	{
@@ -110,7 +110,7 @@ void HandleCapsLockToggle(USB_KeyboardReport_Data_t *report, bool *capsLockPress
 	}
 }
 
-void HandleNameOutput(USB_KeyboardReport_Data_t *report)
+void HandleNameOutput(USB_KeyboardReport_Data_t* report)
 {
 	size_t nameLength = strlen(nameString);
 
