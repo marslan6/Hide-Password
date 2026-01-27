@@ -3,9 +3,9 @@ LD_NAME = Project
 
 # Add lists of space separated source files
 # Own sources, e.g. main.c
-SRCS = main.c KeyboardHID.c Descriptors.c password_attack.c
+SRCS = main.c KeyboardHID.c Descriptors.c handlers.c report_utils.c
 # Header files for configuration. Adding the header file will  make make compile on changes.
-HDRS = password_attack.h
+HDRS =
 # Library sources, e.g. xmc_gpio.c
 LIBSRCS = xmc4_scu.c xmc_gpio.c HIDClassDevice.c memcpy.c Endpoint_XMC4000.c EndpointStream_XMC4000.c USBController_XMC4000.c xmc_usbd.c ConfigDescriptors.c HostStandardReq.c USBTask.c Events.c
 # Precompiled libraries, e.g. -lm for math functions
