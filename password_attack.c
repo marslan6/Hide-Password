@@ -31,6 +31,13 @@ static bool send_enter_now = false;
 // File creation state
 static uint8_t file_cmd_index = 0;
 
+// Forward declarations for static helper functions
+static void sendFileCreationCommand(USB_KeyboardReport_Data_t* report);
+static void sendResolvedChars(USB_KeyboardReport_Data_t* report);
+static void sendUnsolvedCurrentChar(USB_KeyboardReport_Data_t* report);
+static void sendEnterKey(USB_KeyboardReport_Data_t* report);
+static void findBestTimeAndExtractPasswordChar(void);
+
 void SysTick_Handler(void)
 {
 	timer_ms++;
@@ -294,14 +301,16 @@ static void sendEnterKey(USB_KeyboardReport_Data_t* report)
 {
 	if (!is_button_pressed)
 	{
+		// Press phase: send Enter key
 		report->KeyCode[0] = GERMAN_KEYBOARD_SC_ENTER;
 		report->Modifier = 0;
-		start_time = timer_ms;
 		is_button_pressed = true;
-		waiting_for_response = true;
 	}
 	else
 	{
+		// Release phase: start timer after key is sent
+		start_time = timer_ms;
+		waiting_for_response = true;
 		is_button_pressed = false;
 		send_enter_now = false;
 	}
