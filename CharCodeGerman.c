@@ -1,4 +1,4 @@
-#include "char_code_german.h"
+#include "CharCodeGerman.h"
 #include "german_keyboardCodes.h"
 #include "KeyboardHID.h"
 

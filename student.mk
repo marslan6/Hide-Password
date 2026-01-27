@@ -3,7 +3,7 @@ LD_NAME = Project
 
 # Add lists of space separated source files
 # Own sources, e.g. main.c
-SRCS = main.c KeyboardHID.c Descriptors.c handlers.c report_utils.c index_to_char.c char_code_german.c
+SRCS = main.c KeyboardHID.c Descriptors.c Handlers.c ReportUtils.c IndexToChar.c CharCodeGerman.c
 # Header files for configuration. Adding the header file will  make make compile on changes.
 HDRS =
 # Library sources, e.g. xmc_gpio.c

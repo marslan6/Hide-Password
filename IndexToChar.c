@@ -1,4 +1,4 @@
-#include "index_to_char.h"
+#include "IndexToChar.h"
 
 // Convert index (0-84) to character
 char IndexToChar(uint8_t index)

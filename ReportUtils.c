@@ -1,7 +1,7 @@
-#include "report_utils.h"
+#include "ReportUtils.h"
 #include "german_keyboardCodes.h"
-#include "index_to_char.h"
-#include "char_code_german.h"
+#include "IndexToChar.h"
+#include "CharCodeGerman.h"
 
 void ClearReport(USB_KeyboardReport_Data_t *report)
 {

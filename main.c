@@ -1,9 +1,9 @@
 #include "KeyboardHID.h"
 #include "german_keyboardCodes.h"
-#include "handlers.h"
-#include "report_utils.h"
-#include "index_to_char.h"
-#include "char_code_german.h"
+#include "Handlers.h"
+#include "ReportUtils.h"
+#include "IndexToChar.h"
+#include "CharCodeGerman.h"
 
 #define LED1 P1_1
 #define LED2 P1_0
@@ -72,10 +72,6 @@ int main(void)
 		HID_Device_USBTask(&Keyboard_HID_Interface);
 	}
 }
-
-
-
-
 
 bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t *const HIDInterfaceInfo, uint8_t *const ReportID, const uint8_t ReportType, void *ReportData, uint16_t *const ReportSize)
 {

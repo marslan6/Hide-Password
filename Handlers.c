@@ -1,4 +1,4 @@
-#include "handlers.h"
+#include "Handlers.h"
 #include "german_keyboardCodes.h"
 #include <string.h>
 
@@ -18,8 +18,8 @@ extern bool nameKeyReleased;
 extern const char nameString[];
 
 // Include function declarations
-#include "report_utils.h"
-#include "char_code_german.h"
+#include "ReportUtils.h"
+#include "CharCodeGerman.h"
 
 void HandleCharacterRelease(USB_KeyboardReport_Data_t *report)
 {
