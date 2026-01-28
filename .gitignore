@@ -2,3 +2,6 @@ build/
 lib_build/
 JLinkLog
 GDBStudentCommands
+
+# Local files
+assignment3.pdf
