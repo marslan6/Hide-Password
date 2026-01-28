@@ -1,5 +1,11 @@
 # HIDE YOUR PASSWORD
 
+![ISA](https://img.shields.io/badge/ISA-ARM_Cortex--M4-blue)
+![Language](https://img.shields.io/badge/Language-C-green)
+![Platform](https://img.shields.io/badge/Platform-XMC4500-orange)
+![Toolchain](https://img.shields.io/badge/Toolchain-ARM_GCC-yellow)
+![License](https://img.shields.io/badge/License-Apache_2.0-brightgreen)
+
 A hardware-based timing side-channel attack implementation for password extraction using the XMC4500 ARM Cortex-M4 microcontroller. This personal project demonstrates how keystroke timing variations in password validation systems can be exploited to extract credentials character-by-character.
 
 The device emulates a USB HID keyboard, systematically tests each possible character, measures host response times, and identifies correct password characters based on processing latency differences.
@@ -16,6 +22,7 @@ The device emulates a USB HID keyboard, systematically tests each possible chara
 - [Software Dependencies](#software-dependencies)
 - [Project Structure](#project-structure)
 - [Build & Flash](#build--flash)
+- [Testing](#testing)
 - [Configuration](#configuration)
 - [Technical Details](#technical-details)
 
@@ -517,11 +524,18 @@ HIDE_PASSWORD/
 ├── german_keyboardCodes.h  # German HID scan codes
 ├── Makefile                # Build configuration
 ├── student.mk              # Source file configuration
+├── LICENSE.txt             # Apache 2.0 License
 ├── README.md               # This documentation
+├── mock/                   # Test code directory
+│   ├── main.c              # Mock main.c for host-based testing
+│   ├── test_attack.c       # Attack simulation test harness
+│   ├── test_logic.c        # Logic verification test
+│   ├── KeyboardHID.h       # Mock USB HID interface
+│   └── USB.h               # Mock USB definitions
 ├── build/                  # Compiled output
-│   ├── main.elf           # Executable
-│   ├── main.hex           # Flash image
-│   └── main.lst           # Disassembly
+│   ├── main.elf            # Executable
+│   ├── main.hex            # Flash image
+│   └── main.lst            # Disassembly
 └── lib_build/              # Library objects
 ```
 
@@ -530,12 +544,22 @@ HIDE_PASSWORD/
 | File | Lines | Purpose |
 |------|-------|---------|
 | `main.c` | ~160 | Core logic, USB callbacks, timing measurement |
-| `Handlers.c` | ~200 | State machine handlers for each phase |
-| `KeyboardHID.c` | ~150 | USB device initialization and events |
-| `Descriptors.c` | ~180 | USB descriptor definitions |
-| `ReportUtils.c` | ~80 | HID report construction helpers |
-| `IndexToChar.c` | ~100 | Character set mapping |
-| `CharCodeGerman.c` | ~150 | German keyboard scan codes |
+| `Handlers.c` | ~136 | State machine handlers for each phase |
+| `KeyboardHID.c` | ~86 | USB device initialization and events |
+| `Descriptors.c` | ~221 | USB descriptor definitions |
+| `ReportUtils.c` | ~24 | HID report construction helpers |
+| `IndexToChar.c` | ~59 | Character set mapping |
+| `CharCodeGerman.c` | ~115 | German keyboard scan codes |
+
+### Test File Descriptions
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `mock/main.c` | ~159 | Mock main with original logic for host testing |
+| `mock/test_attack.c` | ~162 | Attack simulation with timing responses |
+| `mock/test_logic.c` | ~95 | Logic verification of output sequences |
+| `mock/KeyboardHID.h` | - | Mock USB HID interface stubs |
+| `mock/USB.h` | - | Mock USB definitions |
 
 ---
 
@@ -588,6 +612,60 @@ Programming build/main.hex...
 Verifying...
 Done.
 ```
+
+---
+
+## Testing
+
+The project includes a mock-based testing framework that allows running the attack logic on a host system without requiring actual XMC4500 hardware.
+
+### Test Architecture
+
+The `mock/` directory contains mock implementations that replace hardware-specific headers:
+- **Mock headers** (`KeyboardHID.h`, `USB.h`) provide stubs for USB functions
+- **Mock main.c** includes the application code with mocks enabled
+- **Test harnesses** simulate the host system's timing responses
+
+### Running Tests
+
+```bash
+# Compile and run the attack simulation test
+cd mock
+gcc -I. -o test_attack test_attack.c
+./test_attack
+
+# Compile and run the logic verification test
+gcc -I. -o test_logic test_logic.c
+./test_logic
+```
+
+### Test Descriptions
+
+#### test_attack.c - Attack Simulation
+
+Simulates a complete timing side-channel attack:
+- Simulates a host password system with a known password (e.g., "secret")
+- Feeds Num Lock LED toggles with variable delays based on character matches
+- Validates whether the device successfully extracts the password character-by-character
+
+```
+Expected output:
+Testing character 0: a (delay: 2ms)
+Testing character 1: b (delay: 2ms)
+...
+Testing character 18: s (delay: 15ms) <- MATCH DETECTED
+...
+Password extracted: secret
+TEST PASSED
+```
+
+#### test_logic.c - Logic Verification
+
+Verifies the correctness of:
+- HID keycode generation
+- Character-to-index mapping
+- German keyboard layout conversion
+- State machine transitions
 
 ---
 
